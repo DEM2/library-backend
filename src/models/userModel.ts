@@ -2,9 +2,8 @@ import { model, Schema } from "mongoose";
 import { type } from "os";
 
 type userType = {
-    id : string,
     name : string,
-    lasName : string,
+    lastName : string,
     email : string,
     password : string,
     register_date : Date,
@@ -12,11 +11,10 @@ type userType = {
 }
 
 const UserSchema = new Schema<userType>({
-   id : {type: String, required: true, unique: true},
    name : {type: String, required: true},
-   lasName : {type: String},
+   lastName : {type: String},
    email : {type: String, required: true, unique: true},
-
+   password : {type: String, required: true, unique: true},
    register_date : {type: Date, required: true},
    role : {type: String,}
 })
