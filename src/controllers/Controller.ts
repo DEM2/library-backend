@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 
 
+
 async function createUser(req: Request, res: Response): Promise<void> {
     const { name, lastName, email, password, role } = req.body
 
@@ -44,7 +45,7 @@ async function createUser(req: Request, res: Response): Promise<void> {
 }
 
 async function createBook(req: Request, res: Response) {
-    const { title, author, category , ISBN, publication_date, state } = req.body
+    const { title, author, category , ISBN, publicationYear, publisher, availability } = req.body
     const user = (req as any).user;
     if (user.role != 'Administrador') {
         res.status(403).json({ message: 'No tienes permisos para crear un libro' })
@@ -57,8 +58,9 @@ async function createBook(req: Request, res: Response) {
             author: author,
             category : category ,
             ISBN: ISBN,
-            publication_date: new Date(publication_date),
-            state: state
+            publicationYear: publicationYear,
+            publisher: publisher,
+            availability: availability
         })
 
         await newBook.save()
@@ -96,4 +98,43 @@ async function Login (req: Request, res: Response) : Promise<void> {
     
 }
 
-export { createUser, createBook, Login }
+async function searchBook(req: Request, res: Response) {
+    const {ISBN, author, category, publicationYear, title, publisher, availability} = req.query
+
+    if (ISBN) {
+        const book = await BookModel.findOne({ ISBN });
+        if (!book) {
+            res.status(404).json({ message: "No se encontró el libro con ese ISBN." });
+            return 
+        }
+        res.json({ book });
+        return;
+    }
+
+    const filterParams = {
+        category: category ? { $in: [category as string] } : undefined,
+        publicationYear: publicationYear ? Number(publicationYear) : undefined,
+        publisher: publisher ? publisher as string : undefined,
+        author: author ? author as string : undefined,
+        title: title ? { $regex: new RegExp(title as string, "i") } : undefined,
+        availability: availability ? availability as string : undefined,
+    };
+    
+    const filter = Object.fromEntries(Object.entries(filterParams).filter(([_, v]) => v !== undefined));    
+
+    try {
+        const books = await BookModel.find(filter);
+        if (books.length === 0) {
+            res.status(404).json({ message: "No se encontraron libros con esos criterios." });
+            return 
+        }
+        res.status(200).json({ books });
+        return
+    } catch (error) {
+        res.status(500).json({ error});
+        return
+    }
+
+}
+
+export { createUser, createBook, Login, searchBook }
