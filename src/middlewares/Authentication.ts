@@ -1,8 +1,23 @@
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
 
-import {Request, Response, NextFunction} from 'express';
+async function userAuthentication (request: Request,response: Response, next: NextFunction): Promise<void>{
+    const auth = request.headers["authorization"];
 
-const userAuthentication = (request: Request, response: Response, next: NextFunction) => {
-    const token = request.headers['authorization']?.split(' ')[1];
+    if (!auth){
+        response.status(401).json({ message: "Token no proporcionado." }) ;
+        return
+    }
+    const token = auth.split(" ")[1];
 
-    next();
-}
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+        (request as any).user = decoded;
+
+        next();
+    } catch (error) {
+        response.status(403).json({ message: "Token inválido o expirado." });
+    }
+} 
+
+export { userAuthentication };
