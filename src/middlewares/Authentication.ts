@@ -20,4 +20,17 @@ async function userAuthentication (request: Request,response: Response, next: Ne
     }
 } 
 
-export { userAuthentication };
+function permissionRole(roles: string[]) {
+    return async function (request: Request, response: Response, next: NextFunction) {
+        const user = (request as any).user;
+        
+        if (!user || !roles.includes(user.role)) {
+            response.status(403).json({ message: 'Acceso denegado' });
+            return
+        }
+
+        next();
+    };
+}
+
+export { userAuthentication, permissionRole };

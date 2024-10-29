@@ -47,10 +47,6 @@ async function createUser(req: Request, res: Response): Promise<void> {
 async function createBook(req: Request, res: Response) {
     const { title, author, category , ISBN, publicationYear, publisher, availability } = req.body
     const user = (req as any).user;
-    if (user.role != 'Administrador') {
-        res.status(403).json({ message: 'No tienes permisos para crear un libro' })
-        return
-    }
 
     try {
         const newBook = new BookModel({
