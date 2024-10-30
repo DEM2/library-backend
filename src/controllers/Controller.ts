@@ -133,4 +133,43 @@ async function searchBook(req: Request, res: Response) {
 
 }
 
-export { createUser, createBook, Login, searchBook }
+async function userUpdate(req: Request, res: Response) {
+    const { id } = req.params;
+    const Data = req.body;
+
+    try {
+        const updatedUser = await UserModel.findByIdAndUpdate(id, Data, { new: true });
+        if (!updatedUser) {          
+           res.status(404).json({ message: 'Usuario no encontrado' });
+           return;
+        }
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al actualizar el usuario', error });
+    }
+}
+
+async function bookUpdate(req: Request, res: Response) {
+    const ISBN = req.params;
+    const data =  req.body;
+
+    try {
+        const updatedBook = await BookModel.findOneAndUpdate(
+            { ISBN: ISBN }, 
+             data,    
+            { new: true }   
+        );
+        if (!updatedBook) {
+             res.status(404).json({ message: 'Libro no encontrado' });
+             return
+        }
+        res.status(200).json({
+            message: 'Libro actualizado con éxito',
+            book: updatedBook
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al actualizar el libro', error });
+    }
+}
+
+export { createUser, createBook, Login, searchBook, userUpdate, bookUpdate }

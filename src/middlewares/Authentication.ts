@@ -33,4 +33,16 @@ function permissionRole(roles: string[]) {
     };
 }
 
-export { userAuthentication, permissionRole };
+async function userPermission(request: Request, response: Response, next: NextFunction) {
+    const user = (request as any).user;
+    const { id } = request.params;
+
+    if (user.id === id){
+        next();  
+        return;
+    }
+
+    return permissionRole(['Administrador'])(request, response, next);
+}
+
+export { userAuthentication, permissionRole, userPermission };
