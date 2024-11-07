@@ -7,7 +7,7 @@ type userType = {
     email : string,
     password : string,
     register_date : Date,
-    role : string,
+    permissions: string[];
 }
 
 const UserSchema = new Schema<userType>({
@@ -16,7 +16,7 @@ const UserSchema = new Schema<userType>({
    email : {type: String, required: true, unique: true},
    password : {type: String, required: true, unique: true},
    register_date : {type: Date, required: true},
-   role : {type: String,}
+   permissions: { type: [String], default: [] }
 })
 
 const UserModel = model<userType>("User", UserSchema)

@@ -8,7 +8,7 @@ import dotenv from "dotenv";
 
 
 async function createUser(req: Request, res: Response): Promise<void> {
-    const { name, lastName, email, password, role } = req.body
+    const { name, lastName, email, password } = req.body
 
     try {
 
@@ -28,7 +28,7 @@ async function createUser(req: Request, res: Response): Promise<void> {
                 email: email,
                 password: hashedPassword,
                 register_date: new Date(date.getDay(), date.getMonth(), date.getFullYear()),
-                role: role
+                permissions: []
             }
         )
 
@@ -84,7 +84,7 @@ async function Login (req: Request, res: Response) : Promise<void> {
 
     const token = jwt.sign({
         userId: user._id,
-        role: user.role
+        permission: user.permissions
     }, process.env.JWT_SECRET as string, {expiresIn:'1h'})
 
     res.json({token})
@@ -172,4 +172,31 @@ async function bookUpdate(req: Request, res: Response) {
     }
 }
 
-export { createUser, createBook, Login, searchBook, userUpdate, bookUpdate }
+async  function  assignPermissions(req: Request, res: Response): Promise<void> {
+    const { userId } = req.params; 
+    const { permissions } = req.body; 
+
+    try {
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            res.status(404).json({ message: 'Usuario no encontrado' });
+            return;
+        }
+
+        user.permissions = permissions;
+        await user.save();
+
+        res.status(200).json({
+            message: 'Permisos asignados exitosamente',
+            user: {
+                id: user._id,
+                permissions: user.permissions
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al asignar permisos', error });
+    }
+}
+
+
+export { createUser, createBook, Login, searchBook, userUpdate, bookUpdate,  assignPermissions }

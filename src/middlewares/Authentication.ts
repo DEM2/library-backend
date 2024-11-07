@@ -20,18 +20,19 @@ async function userAuthentication (request: Request,response: Response, next: Ne
     }
 } 
 
-function permissionRole(roles: string[]) {
-    return async function (request: Request, response: Response, next: NextFunction) {
-        const user = (request as any).user;
-        
-        if (!user || !roles.includes(user.role)) {
-            response.status(403).json({ message: 'Acceso denegado' });
-            return
+function permissionRequired(permission: string) {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        const user = (req as any).user;
+
+        if (!user || !user.permissions.includes(permission)) {
+            res.status(403).json({ message: 'Acceso denegado: permiso insuficiente' });
+            return;
         }
 
         next();
     };
 }
+
 
 async function userPermission(request: Request, response: Response, next: NextFunction) {
     const user = (request as any).user;
@@ -42,7 +43,7 @@ async function userPermission(request: Request, response: Response, next: NextFu
         return;
     }
 
-    return permissionRole(['Administrador'])(request, response, next);
+    return permissionRequired('user_Update')(request, response, next);
 }
 
-export { userAuthentication, permissionRole, userPermission };
+export { userAuthentication, permissionRequired, userPermission };
