@@ -12,7 +12,6 @@ async function userAuthentication (request: Request,response: Response, next: Ne
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
-        console.log('Decoded token:', decoded);
         (request as any).user = decoded;
 
         next();
@@ -38,8 +37,9 @@ function permissionRequired(permission: string) {
 async function userPermission(request: Request, response: Response, next: NextFunction) {
     const user = (request as any).user;
     const { id } = request.params;
+    console.log(user)
 
-    if (user.id === id){
+    if (user.userId === id){
         next();  
         return;
     }

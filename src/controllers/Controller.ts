@@ -110,7 +110,7 @@ async function searchBook(req: Request, res: Response) {
     }
 
     const filterParams = {
-        category: category ? { $in: Array.isArray(category) ? category : [category] } : undefined,
+        category: category ? { $in: [category] } : undefined,
         publicationYear: publicationYear ? Number(publicationYear) : undefined,
         publisher: publisher ? publisher as string : undefined,
         author: author ? author as string : undefined,
