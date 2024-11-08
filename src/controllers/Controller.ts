@@ -4,6 +4,9 @@ import argon2 from 'argon2';
 import { BookModel } from '../models/bookModel';
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import {ReservationModel} from "../models/reservationModel";
+import ReservationService from '../service/ReservationService';
+import mongoose from 'mongoose';
 
 
 
@@ -19,7 +22,7 @@ async function createUser(req: Request, res: Response): Promise<void> {
         }
         const pepper = process.env.PEPPER || "";
         const hashedPassword = await argon2.hash(password + pepper);
-        const date = new Date();
+
 
         const newUser = new UserModel(
             {
@@ -27,7 +30,7 @@ async function createUser(req: Request, res: Response): Promise<void> {
                 lastName: lastName,
                 email: email,
                 password: hashedPassword,
-                register_date: new Date(date.getDay(), date.getMonth(), date.getFullYear()),
+                register_date: new Date().toISOString().split('T')[0],
                 permissions: []
             }
         )
@@ -45,8 +48,7 @@ async function createUser(req: Request, res: Response): Promise<void> {
 }
 
 async function createBook(req: Request, res: Response) {
-    const { title, author, category , ISBN, publicationYear, publisher, availability } = req.body
-    const user = (req as any).user;
+    const { title, author, category , ISBN, publicationYear, publisher, availableCopies } = req.body
 
     try {
         const newBook = new BookModel({
@@ -56,7 +58,7 @@ async function createBook(req: Request, res: Response) {
             ISBN: ISBN,
             publicationYear: publicationYear,
             publisher: publisher,
-            availability: availability
+            availableCopies: availableCopies
         })
 
         await newBook.save()
@@ -108,7 +110,7 @@ async function searchBook(req: Request, res: Response) {
     }
 
     const filterParams = {
-        category: category ? { $in: [category as string] } : undefined,
+        category: category ? { $in: Array.isArray(category) ? category : [category] } : undefined,
         publicationYear: publicationYear ? Number(publicationYear) : undefined,
         publisher: publisher ? publisher as string : undefined,
         author: author ? author as string : undefined,
@@ -173,30 +175,107 @@ async function bookUpdate(req: Request, res: Response) {
 }
 
 async  function  assignPermissions(req: Request, res: Response): Promise<void> {
-    const { userId } = req.params; 
-    const { permissions } = req.body; 
-
     try {
-        const user = await UserModel.findById(userId);
+        const userId = req.params.userId.trim().replace(':', '');
+
+        // Verifica que el `userId` sea válido
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            res.status(400).json({ message: 'ID de usuario inválido' });
+            return;
+        }
+
+        const userObjectId = new mongoose.Types.ObjectId(userId);
+        const { permission } = req.body;
+
+        // Valida que `permission` esté presente en la solicitud
+        if (!permission) {
+            res.status(400).json({ message: 'Permiso no especificado' });
+            return;
+        }
+
+        // Busca el usuario
+        const user = await UserModel.findById(userObjectId);
         if (!user) {
             res.status(404).json({ message: 'Usuario no encontrado' });
             return;
         }
 
-        user.permissions = permissions;
-        await user.save();
+        // Agrega el permiso solo si no existe ya en el arreglo
+        if (!user.permissions.includes(permission)) {
+            user.permissions.push(permission);
+            await user.save();
 
-        res.status(200).json({
-            message: 'Permisos asignados exitosamente',
-            user: {
-                id: user._id,
-                permissions: user.permissions
-            }
-        });
+            res.status(200).json({
+                message: 'Permiso asignado exitosamente',
+                user: {
+                    id: user._id,
+                    permissions: user.permissions
+                }
+            });
+        } else {
+            res.status(200).json({
+                message: 'El permiso ya está asignado',
+                user: {
+                    id: user._id,
+                    permissions: user.permissions
+                }
+            });
+        }
     } catch (error) {
         res.status(500).json({ message: 'Error al asignar permisos', error });
     }
 }
 
+async  function reserveBook(req: Request, res: Response) {
+    try {
+      const { _id } =(req as any).user;
+      const { bookId } = req.params;
 
-export { createUser, createBook, Login, searchBook, userUpdate, bookUpdate,  assignPermissions }
+      const reservation = await ReservationService.createReservation(_id, bookId);
+      res.status(201).json({ message: 'Reserva creada exitosamente', reservation });
+      return
+    } catch (error) {
+      res.status(400).json({ error: error });
+      return
+    }
+  }
+
+  async  function returnBook(req: Request, res: Response) {
+    try {
+      const { reservationId } = req.params;
+
+      const reservation = await ReservationService.returnBook(reservationId);
+      res.status(200).json({ message: 'Libro devuelto exitosamente', reservation });
+      return
+    } catch (error) {
+      res.status(400).json({ error: error });
+      return
+    }
+  }
+
+  async function getUserReservationHistory(req: Request, res: Response) {
+    try {
+      const { userId } = req.params;
+      const reservations = await ReservationService.getUserReservationHistory(userId);
+      res.status(200).json(reservations);
+      return
+    } catch (error) {
+      res.status(500).json({ error: 'Error al obtener el historial de reservas del usuario' });
+      return
+    }
+  }
+
+  async function getBookReservationHistory(req: Request, res: Response) {
+    try {
+      const { bookId } = req.params;
+      const reservations = await ReservationService.getBookReservationHistory(bookId);
+      res.status(200).json(reservations);
+      return
+    } catch (error) {
+      res.status(500).json({ error: 'Error al obtener el historial de reservas del libro' });
+      return
+    }
+  }
+
+
+export { createUser, createBook, Login, searchBook, userUpdate, bookUpdate,  assignPermissions, reserveBook, returnBook, getUserReservationHistory, getBookReservationHistory }

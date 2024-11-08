@@ -12,6 +12,7 @@ async function userAuthentication (request: Request,response: Response, next: Ne
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+        console.log('Decoded token:', decoded);
         (request as any).user = decoded;
 
         next();
@@ -24,7 +25,7 @@ function permissionRequired(permission: string) {
     return async (req: Request, res: Response, next: NextFunction) => {
         const user = (req as any).user;
 
-        if (!user || !user.permissions.includes(permission)) {
+        if (!user || !user.permission || !user.permission.includes(permission)) {
             res.status(403).json({ message: 'Acceso denegado: permiso insuficiente' });
             return;
         }

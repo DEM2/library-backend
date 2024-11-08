@@ -8,7 +8,7 @@ type bookType ={
     ISBN: string,
     publicationYear: Number,
     publisher: string,
-    availability: string,
+    availableCopies: number;
 }
 
 const bookScchema = new Schema<bookType>({
@@ -18,7 +18,7 @@ const bookScchema = new Schema<bookType>({
     ISBN: {type: String, unique: true, required: true},
     publicationYear: {type: Number, required: true},
     publisher: {type: String, required: true},
-    availability: {type: String, required: true},
+    availableCopies: { type: Number, required: true, default: 0 },
 })
 
 
