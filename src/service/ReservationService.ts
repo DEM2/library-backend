@@ -1,9 +1,11 @@
 import {ReservationModel} from '../models/reservationModel';
 import {BookModel} from '../models/bookModel';
+import { MessageEvent } from 'http';
 
 class ReservationService{
 
     static async createReservation(userId: string, bookId: string) {
+       
         const book = await BookModel.findById(bookId);
         if (!book) throw new Error('Libro no encontrado');
     
@@ -11,15 +13,14 @@ class ReservationService{
           throw new Error('No hay copias disponibles para este libro');
         }
     
+        const reservation = new ReservationModel({
+          user: userId,
+          book: bookId,
+          reservationDate: new Date(),
+        });
+
         book.availableCopies -= 1;
         await book.save();
-    
-        const reservation = new ReservationModel({
-          userId,
-          bookId,
-          reservationDate: new Date(),
-          returnDate: null,
-        });
         await reservation.save();
     
         return reservation;
@@ -42,11 +43,11 @@ class ReservationService{
       }
 
     static async getUserReservationHistory(userId: string) {
-        return await ReservationModel.find({ userId }).populate('book', 'title').exec();
+        return await ReservationModel.find({  user: userId  }).populate('book', 'title').exec();
     }
 
     static async getBookReservationHistory(bookId: string) {
-        return await ReservationModel.find({ bookId }).populate('user', 'name').exec();
+        return await ReservationModel.find({ book:bookId }).populate('user', 'name').exec();
       }
     
 }

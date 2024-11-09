@@ -37,7 +37,6 @@ function permissionRequired(permission: string) {
 async function userPermission(request: Request, response: Response, next: NextFunction) {
     const user = (request as any).user;
     const { id } = request.params;
-    console.log(user)
 
     if (user.userId === id){
         next();  
