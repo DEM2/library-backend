@@ -7,7 +7,7 @@ class ReservationService{
     static async createReservation(userId: string, bookId: string) {
        
         const book = await BookModel.findById(bookId);
-        if (!book) throw new Error('Libro no encontrado');
+        if (!book || !book.isActive) throw new Error('Libro no encontrado');
     
         if (book.availableCopies <= 0) {
           throw new Error('No hay copias disponibles para este libro');

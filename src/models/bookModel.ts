@@ -9,6 +9,7 @@ type bookType ={
     publicationYear: Number,
     publisher: string,
     availableCopies: number;
+    isActive: boolean;
 }
 
 const bookScchema = new Schema<bookType>({
@@ -19,6 +20,7 @@ const bookScchema = new Schema<bookType>({
     publicationYear: {type: Number, required: true},
     publisher: {type: String, required: true},
     availableCopies: { type: Number, required: true, default: 0 },
+    isActive: { type: Boolean, default: true }
 })
 
 

@@ -8,6 +8,7 @@ type userType = {
     password : string,
     register_date : Date,
     permissions: string[];
+    isActive: boolean;
 }
 
 const UserSchema = new Schema<userType>({
@@ -16,7 +17,8 @@ const UserSchema = new Schema<userType>({
    email : {type: String, required: true, unique: true},
    password : {type: String, required: true, unique: true},
    register_date : {type: Date, required: true},
-   permissions: { type: [String], default: [] }
+   permissions: { type: [String], default: [] },
+   isActive: { type: Boolean, default: true }
 })
 
 const UserModel = model<userType>("User", UserSchema)

@@ -48,7 +48,11 @@ async function Login (req: Request, res: Response) : Promise<void> {
     try{
         const user = await UserModel.findOne({ email})
         const pepper = process.env.PEPPER || ""
-
+    
+    if (!user?.isActive) {
+            res.status(403).json({ message: "Su cuenta está deshabilitada." });
+            return;
+        }
     if(!user || !await argon2.verify(user.password,password + pepper)) {
         res.status(401).json({ message: 'Credenciales Invalidas' })
         return
@@ -135,4 +139,21 @@ async  function  assignPermissions(req: Request, res: Response): Promise<void> {
     }
 }
 
-export {createUser, userUpdate, Login, assignPermissions}
+async function DeleteUser(req: Request, res: Response) {
+    const { userId } = req.params;
+    
+    try {
+
+      const user = await UserModel.findByIdAndUpdate(userId, { isActive: false }, { new: true });
+      if (!user) {
+        res.status(404).json({ message: 'Usuario no encontrado' })
+        return 
+      };
+  
+      res.status(200).json({ message: 'Usuario inhabilitado correctamente', user });
+    } catch (error) {
+      res.status(500).json({ message: 'Error al inhabilitar el usuario', error });
+    }
+  }
+
+export {createUser, userUpdate, Login, assignPermissions, DeleteUser}

@@ -18,6 +18,7 @@ async function userAuthentication (request: Request,response: Response, next: Ne
     } catch (error) {
         response.status(403).json({ message: "Token inválido o expirado." });
     }
+
 } 
 
 function permissionRequired(permission: string) {
@@ -34,7 +35,7 @@ function permissionRequired(permission: string) {
 }
 
 
-async function userPermission(request: Request, response: Response, next: NextFunction) {
+async function userUpdatePermission(request: Request, response: Response, next: NextFunction) {
     const user = (request as any).user;
     const { id } = request.params;
 
@@ -46,4 +47,17 @@ async function userPermission(request: Request, response: Response, next: NextFu
     return permissionRequired('user_Update')(request, response, next);
 }
 
-export { userAuthentication, permissionRequired, userPermission };
+async function userDisablePermission(request: Request, response: Response, next: NextFunction) {
+    const user = (request as any).user;
+    const { id } = request.params;
+
+    if (user.userId === id) {
+        next();  
+        return;
+    }
+
+    return permissionRequired('disable_User')(request, response, next);
+}
+
+
+export { userAuthentication, permissionRequired, userUpdatePermission, userDisablePermission };

@@ -30,7 +30,7 @@ async function searchBook(req: Request, res: Response) {
     const {id, author, category, publicationYear, title, publisher, ISBN} = req.query
 
     if (id) {
-        const book = await BookModel.findOne({ _id:id });
+        const book = await BookModel.findOne({ _id:id, isActive: true });
         if (!book) {
             res.status(404).json({ message: "No se encontró el libro con ese Id." });
             return 
@@ -71,7 +71,7 @@ async function bookUpdate(req: Request, res: Response) {
 
     try {
         const updatedBook = await BookModel.findOneAndUpdate(
-            { ISBN: ISBN}, 
+            { ISBN: ISBN, isActive: true }, 
              data,    
             { new: true }   
         );
@@ -88,4 +88,20 @@ async function bookUpdate(req: Request, res: Response) {
     }
 }
 
-export { createBook, searchBook, bookUpdate}
+async function DeleteBook(req: Request, res: Response) {
+    const { bookId } = req.params;
+  
+    try {
+      const book = await BookModel.findByIdAndUpdate(bookId, { isActive: false }, { new: true });
+      if (!book) {
+        res.status(404).json({ message: 'Libro no encontrado' });
+        return
+      }
+  
+      res.status(200).json({ message: 'Libro inhabilitado correctamente', book });
+    } catch (error) {
+      res.status(500).json({ message: 'Error al inhabilitar el libro', error });
+    }
+  }
+
+export { createBook, searchBook, bookUpdate, DeleteBook}
